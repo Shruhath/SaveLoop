@@ -8,11 +8,6 @@ const COLORS = [
   "#EC4899", "#06B6D4", "#84CC16", "#F97316", "#6366F1"
 ];
 
-const ICONS = [
-  "💼", "💻", "📈", "💰", "🍽️", "🚗", "🛍️", "🎬", "📄", "🏥",
-  "📚", "✈️", "📦", "🏠", "⚡", "📱", "🎵", "🏋️", "🎨", "🔧"
-];
-
 export default function CategoryManager() {
   const [activeTab, setActiveTab] = useState<"income" | "expense">("expense");
   const [showAddCategory, setShowAddCategory] = useState(false);
@@ -20,7 +15,7 @@ export default function CategoryManager() {
   const [categoryForm, setCategoryForm] = useState({
     name: "",
     color: COLORS[0],
-    icon: ICONS[0],
+    icon: "", // Remove default icon
   });
 
   const categories = useQuery(api.categories.getUserCategories, { type: activeTab });
@@ -33,6 +28,11 @@ export default function CategoryManager() {
     
     if (!categoryForm.name) {
       toast.error("Please enter a category name");
+      return;
+    }
+
+    if (!categoryForm.icon) {
+      toast.error("Please enter an emoji");
       return;
     }
 
@@ -56,7 +56,7 @@ export default function CategoryManager() {
         toast.success("Category created successfully!");
       }
 
-      setCategoryForm({ name: "", color: COLORS[0], icon: ICONS[0] });
+      setCategoryForm({ name: "", color: COLORS[0], icon: "" });
       setShowAddCategory(false);
     } catch (error) {
       toast.error("Failed to save category");
@@ -109,7 +109,7 @@ export default function CategoryManager() {
         <button
           onClick={() => {
             setEditingCategory(null);
-            setCategoryForm({ name: "", color: COLORS[0], icon: ICONS[0] });
+            setCategoryForm({ name: "", color: COLORS[0], icon: "" });
             setShowAddCategory(true);
           }}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
@@ -167,23 +167,21 @@ export default function CategoryManager() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Icon
+                  Emoji *
                 </label>
-                <div className="grid grid-cols-10 gap-2">
-                  {ICONS.map((icon) => (
-                    <button
-                      key={icon}
-                      type="button"
-                      onClick={() => setCategoryForm(prev => ({ ...prev, icon }))}
-                      className={`p-2 text-lg rounded-lg border-2 transition-colors ${
-                        categoryForm.icon === icon
-                          ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                          : "border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500"
-                      }`}
-                    >
-                      {icon}
-                    </button>
-                  ))}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={categoryForm.icon}
+                    onChange={(e) => setCategoryForm(prev => ({ ...prev, icon: e.target.value }))}
+                    required
+                    maxLength={2}
+                    className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-center text-2xl"
+                    placeholder=""
+                  />
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Enter any emoji (max 2 characters)
+                  </div>
                 </div>
               </div>
 
