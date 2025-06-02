@@ -29,10 +29,8 @@ export default function App() {
 
   // Initialize default categories for new users
   useEffect(() => {
-    if (userPreferences !== undefined) {
-      initializeCategories();
-    }
-  }, [userPreferences, initializeCategories]);
+    initializeCategories();
+  }, [initializeCategories]);
 
   const toggleDarkMode = () => {
     const newDarkMode = !darkMode;

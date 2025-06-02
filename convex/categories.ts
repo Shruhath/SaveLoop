@@ -93,38 +93,40 @@ export const initializeDefaultCategories = mutation({
     const userId = await getAuthUserId(ctx);
     if (!userId) throw new Error("Not authenticated");
 
+    // Check if user already has any categories
     const existingCategories = await ctx.db
       .query("categories")
       .withIndex("by_user_and_type", (q) => q.eq("userId", userId))
       .collect();
 
-    if (existingCategories.length > 0) return;
+    // Only create default categories if user has no categories
+    if (existingCategories.length === 0) {
+      const defaultCategories = [
+        // Income categories
+        { name: "Salary", type: "income" as const, color: "#10B981", icon: "💼" },
+        { name: "Freelance", type: "income" as const, color: "#3B82F6", icon: "💻" },
+        { name: "Investment", type: "income" as const, color: "#8B5CF6", icon: "📈" },
+        { name: "Other Income", type: "income" as const, color: "#06B6D4", icon: "💰" },
+        
+        // Expense categories
+        { name: "Food & Dining", type: "expense" as const, color: "#EF4444", icon: "🍽️" },
+        { name: "Transportation", type: "expense" as const, color: "#F59E0B", icon: "🚗" },
+        { name: "Shopping", type: "expense" as const, color: "#EC4899", icon: "🛍️" },
+        { name: "Entertainment", type: "expense" as const, color: "#8B5CF6", icon: "🎬" },
+        { name: "Bills & Utilities", type: "expense" as const, color: "#6B7280", icon: "📄" },
+        { name: "Healthcare", type: "expense" as const, color: "#10B981", icon: "🏥" },
+        { name: "Education", type: "expense" as const, color: "#3B82F6", icon: "📚" },
+        { name: "Travel", type: "expense" as const, color: "#06B6D4", icon: "✈️" },
+        { name: "Other Expenses", type: "expense" as const, color: "#6B7280", icon: "📦" },
+      ];
 
-    const defaultCategories = [
-      // Income categories
-      { name: "Salary", type: "income" as const, color: "#10B981", icon: "💼" },
-      { name: "Freelance", type: "income" as const, color: "#3B82F6", icon: "💻" },
-      { name: "Investment", type: "income" as const, color: "#8B5CF6", icon: "📈" },
-      { name: "Other Income", type: "income" as const, color: "#06B6D4", icon: "💰" },
-      
-      // Expense categories
-      { name: "Food & Dining", type: "expense" as const, color: "#EF4444", icon: "🍽️" },
-      { name: "Transportation", type: "expense" as const, color: "#F59E0B", icon: "🚗" },
-      { name: "Shopping", type: "expense" as const, color: "#EC4899", icon: "🛍️" },
-      { name: "Entertainment", type: "expense" as const, color: "#8B5CF6", icon: "🎬" },
-      { name: "Bills & Utilities", type: "expense" as const, color: "#6B7280", icon: "📄" },
-      { name: "Healthcare", type: "expense" as const, color: "#10B981", icon: "🏥" },
-      { name: "Education", type: "expense" as const, color: "#3B82F6", icon: "📚" },
-      { name: "Travel", type: "expense" as const, color: "#06B6D4", icon: "✈️" },
-      { name: "Other Expenses", type: "expense" as const, color: "#6B7280", icon: "📦" },
-    ];
-
-    for (const category of defaultCategories) {
-      await ctx.db.insert("categories", {
-        ...category,
-        userId,
-        isDefault: true,
-      });
+      for (const category of defaultCategories) {
+        await ctx.db.insert("categories", {
+          ...category,
+          userId,
+          isDefault: true,
+        });
+      }
     }
   },
 });
