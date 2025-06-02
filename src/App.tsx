@@ -2,7 +2,7 @@ import { Authenticated, Unauthenticated, useQuery, useMutation } from "convex/re
 import { api } from "../convex/_generated/api";
 import { SignInForm } from "./SignInForm";
 import { SignOutButton } from "./SignOutButton";
-import { Toaster } from "sonner";
+import { Toaster, toast } from "sonner";
 import { useState, useEffect } from "react";
 import Dashboard from "./components/Dashboard";
 import TransactionForm from "./components/TransactionForm";
@@ -13,7 +13,6 @@ import CategoryManager from "./components/CategoryManager";
 
 export default function App() {
   const [activeTab, setActiveTab] = useState("dashboard");
-  const [darkMode, setDarkMode] = useState(false);
   
   const userPreferences = useQuery(api.userPreferences.getUserPreferences);
   const updatePreferences = useMutation(api.userPreferences.updateUserPreferences);
@@ -22,8 +21,12 @@ export default function App() {
   // Initialize dark mode from preferences
   useEffect(() => {
     if (userPreferences) {
-      setDarkMode(userPreferences.darkMode);
-      document.documentElement.classList.toggle('dark', userPreferences.darkMode);
+      // Apply theme class to document
+      if (userPreferences.darkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
   }, [userPreferences]);
 
@@ -32,33 +35,48 @@ export default function App() {
     initializeCategories();
   }, [initializeCategories]);
 
-  const toggleDarkMode = () => {
-    const newDarkMode = !darkMode;
-    setDarkMode(newDarkMode);
-    document.documentElement.classList.toggle('dark', newDarkMode);
-    updatePreferences({ darkMode: newDarkMode });
+  const toggleDarkMode = async () => {
+    if (!userPreferences) return;
+    
+    const newDarkMode = !userPreferences.darkMode;
+    
+    try {
+      // Update preferences in the database first
+      await updatePreferences({ darkMode: newDarkMode });
+      
+      // Only update the theme class after successful database update
+      if (newDarkMode) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (error) {
+      console.error('Failed to update theme preference:', error);
+      toast.error('Failed to update theme preference');
+    }
   };
 
   return (
-    <div className={`min-h-screen flex flex-col ${darkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+    <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
         <Authenticated>
           <div className="flex flex-col h-screen">
             {/* Header */}
-            <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 transition-colors duration-200">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                   <div className="flex items-center">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white transition-colors duration-200">
                       💰 Budget Tracker
                     </h1>
                   </div>
                   <div className="flex items-center space-x-4">
                     <button
                       onClick={toggleDarkMode}
-                      className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                      className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors duration-200"
+                      aria-label={userPreferences?.darkMode ? "Switch to light mode" : "Switch to dark mode"}
                     >
-                      {darkMode ? '☀️' : '🌙'}
+                      {userPreferences?.darkMode ? '☀️' : '🌙'}
                     </button>
                     <SignOutButton />
                   </div>
@@ -68,7 +86,7 @@ export default function App() {
 
             <div className="flex flex-1 overflow-hidden">
               {/* Sidebar */}
-              <nav className="w-64 bg-white dark:bg-gray-800 shadow-sm border-r border-gray-200 dark:border-gray-700 overflow-y-auto">
+              <nav className="w-64 bg-white dark:bg-gray-800 shadow-sm border-r border-gray-200 dark:border-gray-700 overflow-y-auto transition-colors duration-200">
                 <div className="p-4">
                   <div className="space-y-2">
                     {[
@@ -82,7 +100,7 @@ export default function App() {
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+                        className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors duration-200 ${
                           activeTab === tab.id
                             ? "bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300"
                             : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -97,7 +115,7 @@ export default function App() {
               </nav>
 
               {/* Main Content */}
-              <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
+              <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
                 <div className="max-w-7xl mx-auto p-6">
                   {activeTab === "dashboard" && <Dashboard />}
                   {activeTab === "add-transaction" && <TransactionForm />}
@@ -112,13 +130,13 @@ export default function App() {
         </Authenticated>
 
         <Unauthenticated>
-          <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+          <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
             <div className="max-w-md w-full space-y-8 p-8">
               <div className="text-center">
-                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2 transition-colors duration-200">
                   💰 Budget Tracker
                 </h1>
-                <p className="text-gray-600 dark:text-gray-400">
+                <p className="text-gray-600 dark:text-gray-400 transition-colors duration-200">
                   Track your income, expenses, and achieve your financial goals
                 </p>
               </div>

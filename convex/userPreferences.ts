@@ -21,12 +21,19 @@ export const getUserPreferences = query({
       .withIndex("by_user", (q) => q.eq("userId", userId))
       .first();
 
-    // Return default preferences if none exist
-    return preferences || {
-      darkMode: false,
-      currency: "₹",
-      defaultView: "dashboard",
-    };
+    if (!preferences) {
+      // Create default preferences if none exist
+      const defaultPreferences = {
+        userId,
+        darkMode: false,
+        currency: "₹",
+        defaultView: "dashboard",
+      };
+      const id = await ctx.db.insert("userPreferences", defaultPreferences);
+      return { ...defaultPreferences, _id: id };
+    }
+
+    return preferences;
   },
 });
 
@@ -54,14 +61,17 @@ export const updateUserPreferences = mutation({
       if (args.defaultView !== undefined) updates.defaultView = args.defaultView;
 
       await ctx.db.patch(existingPreferences._id, updates);
+      return { ...existingPreferences, ...updates };
     } else {
       // Create new preferences
-      await ctx.db.insert("userPreferences", {
+      const newPreferences = {
         userId,
-        darkMode: args.darkMode || false,
-        currency: args.currency || "₹",
-        defaultView: args.defaultView || "dashboard",
-      });
+        darkMode: args.darkMode ?? false,
+        currency: args.currency ?? "₹",
+        defaultView: args.defaultView ?? "dashboard",
+      };
+      const id = await ctx.db.insert("userPreferences", newPreferences);
+      return { ...newPreferences, _id: id };
     }
   },
 });
